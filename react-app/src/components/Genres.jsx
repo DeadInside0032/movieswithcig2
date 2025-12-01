@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { getGenres } from '../utils'
 import { Stack } from '@mui/material'
+import { MySpinner } from './MySpinner'
 import { SingleChip } from './SingleChip'
 
 export const Genres = ({type,selectedGenres,setSelectedGenres}) => {
@@ -20,11 +21,14 @@ export const Genres = ({type,selectedGenres,setSelectedGenres}) => {
   console.log(selectedGenres);
     
   return (
-    <Stack direction='row' flexWrap='wrap' justifyContent='center'>  
-        {data && data.genres.map(obj=>
-            <SingleChip key={obj.id} {...obj} selectedGenres={selectedGenres} setSelectedGenres={setSelectedGenres} />
-        )}
-    </Stack>
+  <>
+  {isLoading && <MySpinner />}
+  <Stack direction='row' flexWrap='wrap' justifyContent='center'>  
+    {data && data.genres?.map(obj=>
+      <SingleChip key={obj.id} {...obj} selectedGenres={selectedGenres} setSelectedGenres={setSelectedGenres} setPage={setPage} />
+    )}
+  </Stack>
+  </>
   )
 }
 

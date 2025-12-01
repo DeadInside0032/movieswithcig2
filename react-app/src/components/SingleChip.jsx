@@ -6,8 +6,8 @@ import {MdOutlineRadioButtonChecked, MdOutlineRadioButtonUnchecked } from "react
 
 
 
-export const SingleChip = ({id,name,selectedGenres,setSelectedGenres}) => {
-    const [isSelected, setIsSelected] = useState(false)
+export const SingleChip = ({id,name,selectedGenres,setSelectedGenres, setPage}) => {
+    const [isSelected, setIsSelected] = useState(() => selectedGenres?.indexOf(id) !== -1)
 
     const handleClick = () => {
         setIsSelected(!isSelected)

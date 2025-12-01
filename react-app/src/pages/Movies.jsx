@@ -7,7 +7,7 @@ import { MySpinner } from '../components/MySpinner'
 import { useState } from 'react'
 
 
-export const Movies = props => {
+export const Movies = () => {
   const [page, setPage] = React.useState(1);
   const [selectedGenres,setSelectedGenres]=useState([])
   const [data, setData] = useState(null)
@@ -33,9 +33,9 @@ export const Movies = props => {
    > 
     {isLoading && <MySpinner />}
     <Grid container spacing={2} justifyContent='center'>
-      {data && data.results?.map(obj=>
-       <MyCard key={obj.id} {...obj}/>
-      )}
+      {data?.results?.length > 0 ? (
+        data.results.map(obj => <MyCard key={obj.id} {...obj} />)
+      ) : (!isLoading && <div>No movies found.</div>)}
     </Grid>
 
    </PageLayout>

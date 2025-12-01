@@ -5,7 +5,7 @@ import BottomNavigationAction from '@mui/material/BottomNavigationAction';
 import { MdMovie } from "react-icons/md";
 import { MdOutlineLiveTv } from "react-icons/md";
 import { FaSearch } from "react-icons/fa";
-import { useNavigate } from 'react-router';
+import { useNavigate } from 'react-router-dom';
 
 export const MyBottomNav=()=> {
   const [value, setValue] = React.useState(0);
