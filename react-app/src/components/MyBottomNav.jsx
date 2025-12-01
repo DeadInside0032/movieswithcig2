@@ -21,7 +21,11 @@ export const MyBottomNav=()=> {
 
   return (
     <Box sx={{width:'100%',position:'fixed',bottom:0 }}>
-      <BottomNavigation todo="add properties and children" />
+      <BottomNavigation showLabels value={value} onChange={handleChange}>
+        <BottomNavigationAction label="Movies" icon={<MdMovie size={20}/> } />
+        <BottomNavigationAction label="TV" icon={<MdOutlineLiveTv size={20}/> } />
+        <BottomNavigationAction label="Search" icon={<FaSearch size={16}/> } />
+      </BottomNavigation>
     </Box>
   );
 }
