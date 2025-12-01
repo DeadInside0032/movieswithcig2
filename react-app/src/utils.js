@@ -5,12 +5,16 @@ const urlGenres = 'https://api.themoviedb.org/3/genre/';
 const getTmdbMetadata = async function () {
     // Prefer client environment variable, fallback to serverless function
     if (import.meta.env?.VITE_TMDB_API_KEY) {
+        console.log('TMDB metadata: using VITE_TMDB_API_KEY from import.meta.env')
         return { apiKey: import.meta.env.VITE_TMDB_API_KEY };
     }
     try {
         const resp = await fetch('/.netlify/functions/tmdb-metadata');
         if (!resp.ok) return { apiKey: null };
-        return await resp.json();
+        const data = await resp.json();
+        if (data?.bearer) console.log('TMDB metadata: using bearer token from serverless function')
+        else if (data?.apiKey) console.log('TMDB metadata: using apiKey from serverless function')
+        return data;
     } catch (err) {
         console.warn('Failed to obtain tmdb metadata', err);
         return { apiKey: null };
