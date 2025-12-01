@@ -17,14 +17,17 @@ import ShareIcon from '@mui/icons-material/Share';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 
-export const MyCard = ({backdrop_path,title, overview, release_date, vote_average}) => {
-  const image = backdrop_path ? img_300 + backdrop_path : null
+export const MyCard = ({backdrop_path,title, overview, release_date, vote_average, name, first_air_date, poster_path}) => {
+  const effectiveTitle = title || name || 'No Title'
+  const effectiveDate = release_date || first_air_date || ''
+  const imagePath = backdrop_path || poster_path
+  const image = imagePath ? img_300 + imagePath : null
   return (
     <Card sx={{maxWidth: 345, margin: '0.5rem'}}>
       <CardHeader
         avatar={
           <Avatar sx={{ bgcolor: red[500] }} aria-label="movie">
-            {title?.[0] ?? 'M'}
+              {effectiveTitle?.[0] ?? 'M'}
           </Avatar>
         }
         action={
@@ -32,8 +35,8 @@ export const MyCard = ({backdrop_path,title, overview, release_date, vote_averag
             <MoreVertIcon />
           </IconButton>
         }
-        title={title}
-        subheader={release_date}
+        title={effectiveTitle}
+        subheader={effectiveDate}
       />
       {image && <CardMedia component="img" height="194" image={image} alt={title} />}
       <CardContent>

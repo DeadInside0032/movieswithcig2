@@ -41,6 +41,13 @@ export const getData = async ({ queryKey }) => {
     }
     if (Array.isArray(queryKey[3]) && queryKey[3].length !== 0) // apply genre filters if any
         url += '&with_genres=' + queryKey[3].join(',');
+    // support extra params as an object in queryKey[4], e.g., { query: 'batman' }
+    if (queryKey[4] && typeof queryKey[4] === 'object') {
+        Object.entries(queryKey[4]).forEach(([k, v]) => {
+            if (v === undefined || v === null) return
+            url += `&${encodeURIComponent(k)}=${encodeURIComponent(String(v))}`
+        })
+    }
     console.log('getData url', url);
 
     const headers = {}
