@@ -4,32 +4,21 @@ import { Stack } from '@mui/material'
 import { MySpinner } from './MySpinner'
 import { SingleChip } from './SingleChip'
 
-export const Genres = ({type='movie', selectedGenres,setSelectedGenres, setPage}) => {
-  const [data, setData] = useState(null)
-  const [isLoading, setIsLoading] = useState(false)
-  // use getGenres (reads from TMDB)
+export const Genres = ({type,selectedGenres,setSelectedGenres}) => {
+    const [data, setData] = useState(null)
+
+  // fetch genres when `type` changes
   useEffect(()=>{
-    let mounted=true
-    // default type already provided as prop default value
-      const load = async () => {
-        setData(null)
-        setIsLoading(true)
-        try {
-          const res = await getGenres({queryKey:['GENRES', type]})
-          if(!mounted) return
-          setData(res)
-        } catch(err) {
-          console.error(err)
-        } finally {
-          if(mounted) setIsLoading(false)
-        }
-      }
-      load()
-    return ()=>{mounted=false}
+    let mounted = true
+    setData(null)
+    getGenres({queryKey:[null, type]})
+      .then(res => { if(mounted) setData(res) })
+      .catch(err => { console.error('getGenres error', err); if(mounted) setData(null) })
+    return ()=>{ mounted=false }
   },[type])
-    data && console.log(data.genres);
-    
-    console.log(selectedGenres);
+
+  data && console.log(data.genres);
+  console.log(selectedGenres);
     
   return (
   <>

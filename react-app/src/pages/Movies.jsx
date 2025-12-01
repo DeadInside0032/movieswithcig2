@@ -15,26 +15,17 @@ export const Movies = () => {
 
   console.log(page);
 
-  // Use getData to fetch movies and the serverless/configured API key.
-  useEffect(() => {
-    let mounted = true;
-    const load = async () => {
-      try {
-        setLoading(true);
-        const res = await getData({ queryKey: ['MOVIES', 'discover/movie', page, selectedGenres] });
-        if (!mounted) return;
-        setData(res);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        if (mounted) setLoading(false);
-      }
-    }
-    load();
-    return () => { mounted = false }
-  }, [page, selectedGenres])
+  const type = 'movie'
 
-  // Page is reset to 1 inside the SingleChip click handler; no extra effect needed.
+  useEffect(()=>{
+    let mounted = true
+    setLoading(true)
+    getData({queryKey:[null, type, page, selectedGenres]})
+      .then(res=>{ if(mounted) setData(res) })
+      .catch(err=>{ console.error('getData error', err); if(mounted) setData(null) })
+      .finally(()=>{ if(mounted) setLoading(false) })
+    return ()=>{ mounted=false }
+  },[page, selectedGenres])
 
   return (
    <PageLayout title="Movies" page={page} setPage={setPage} type='movie'

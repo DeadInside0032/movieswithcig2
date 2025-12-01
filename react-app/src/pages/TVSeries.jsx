@@ -7,35 +7,29 @@ import { MySpinner } from '../components/MySpinner'
 
 export const TVSeries = () => {
   const [page, setPage] = useState(1)
+  const [selectedGenres, setSelectedGenres] = useState([])
   const [data, setData] = useState(null)
   const [isLoading, setLoading] = useState(false)
-  const [selectedGenres, setSelectedGenres] = useState([])
+
+  const type = 'tv'
 
   useEffect(() => {
     let mounted = true
-    const load = async () => {
-      try {
-        setLoading(true)
-        const res = await getData({ queryKey: ['TV', 'discover/tv', page, selectedGenres] })
-        if (!mounted) return
-        setData(res)
-      } catch (err) {
-        console.error(err)
-      } finally {
-        if(mounted) setLoading(false)
-      }
-    }
-    load()
-    return ()=>{mounted=false}
-  },[page, selectedGenres])
+    setLoading(true)
+    getData({ queryKey: [null, type, page, selectedGenres] })
+      .then(res => { if (mounted) setData(res) })
+      .catch(err => { console.error('getData error', err); if (mounted) setData(null) })
+      .finally(() => { if (mounted) setLoading(false) })
+    return () => { mounted = false }
+  }, [page, selectedGenres])
 
   return (
-    <PageLayout title='TV Series' page={page} setPage={setPage} type='tv' selectedGenres={selectedGenres} setSelectedGenres={setSelectedGenres}>
+    <PageLayout title='TV Series' page={page} setPage={setPage} type={type} selectedGenres={selectedGenres} setSelectedGenres={setSelectedGenres}>
       {isLoading && <MySpinner />}
       <Grid container spacing={2} justifyContent='center'>
-        {data?.results?.length > 0 ? (
-          data.results.map(obj => <MyCard key={obj.id} {...obj} />)
-        ) : (!isLoading && <div>No shows found.</div>)}
+        {data && data.results?.map(obj => (
+          <MyCard key={obj.id} {...obj} />
+        ))}
       </Grid>
     </PageLayout>
   )

@@ -17,17 +17,19 @@ import ShareIcon from '@mui/icons-material/Share';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 
-export const MyCard = ({backdrop_path,title, overview, release_date, vote_average, name, first_air_date, poster_path}) => {
-  const effectiveTitle = title || name || 'No Title'
-  const effectiveDate = release_date || first_air_date || ''
-  const imagePath = backdrop_path || poster_path
-  const image = imagePath ? img_300 + imagePath : null
+export const MyCard = ({backdrop_path, poster_path, title, name, overview, release_date, first_air_date, vote_average}) => {
+  // Handle both movie (title, backdrop_path, release_date) and TV (name, poster_path, first_air_date)
+  const displayTitle = title || name || 'Unknown'
+  const displayImage = backdrop_path || poster_path
+  const image = displayImage ? img_300 + displayImage : undefined
+  const displayDate = release_date || first_air_date || ''
+
   return (
-    <Card sx={{maxWidth: 345, margin: '0.5rem'}}>
+    <Card sx={{ width: 300, margin: 1 }}>
       <CardHeader
         avatar={
           <Avatar sx={{ bgcolor: red[500] }} aria-label="movie">
-              {effectiveTitle?.[0] ?? 'M'}
+            {displayTitle ? displayTitle.charAt(0) : '?'}
           </Avatar>
         }
         action={
@@ -35,10 +37,17 @@ export const MyCard = ({backdrop_path,title, overview, release_date, vote_averag
             <MoreVertIcon />
           </IconButton>
         }
-        title={effectiveTitle}
-        subheader={effectiveDate}
+        title={displayTitle}
+        subheader={displayDate}
       />
-      {image && <CardMedia component="img" height="194" image={image} alt={title} />}
+      {image && (
+        <CardMedia
+          component="img"
+          height="140"
+          image={image}
+          alt={title}
+        />
+      )}
       <CardContent>
         <Typography variant="body2" color="text.secondary">
           {overview}
@@ -51,7 +60,6 @@ export const MyCard = ({backdrop_path,title, overview, release_date, vote_averag
         <IconButton aria-label="share">
           <ShareIcon />
         </IconButton>
-        <Typography sx={{ marginLeft: 'auto', paddingRight:'8px' }} variant='body2'>{vote_average}</Typography>
       </CardActions>
     </Card>
   )

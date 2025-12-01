@@ -1,83 +1,75 @@
 
-const base_url = 'https://api.themoviedb.org/3/'; // TMDB base API url
-const urlGenres = 'https://api.themoviedb.org/3/genre/';
+const DEFAULT_BASE_3 = 'https://api.themoviedb.org/3'
+const DEFAULT_BASE_4 = 'https://api.themoviedb.org/4'
 
-const getTmdbMetadata = async function () {
-    // Prefer client environment variable, fallback to serverless function
-    if (import.meta.env?.VITE_TMDB_API_KEY) {
-        console.log('TMDB metadata: using VITE_TMDB_API_KEY from import.meta.env')
-        return { apiKey: import.meta.env.VITE_TMDB_API_KEY };
-    }
-    try {
-        const resp = await fetch('/.netlify/functions/tmdb-metadata');
-        if (!resp.ok) return { apiKey: null };
-        const data = await resp.json();
-        if (data?.bearer) console.log('TMDB metadata: using bearer token from serverless function')
-        else if (data?.apiKey) console.log('TMDB metadata: using apiKey from serverless function')
-        return data;
-    } catch (err) {
-        console.warn('Failed to obtain tmdb metadata', err);
-        return { apiKey: null };
+const getTmdbMetadata = function () {
+    const apiKey = import.meta.env.VITE_TMDB_API_KEY || null
+    // detect whether the provided key looks like a v4 JWT (starts with eyJ...)
+    const looksLikeV4 = typeof apiKey === 'string' && apiKey.split('.').length === 3
+    const baseFromEnv = import.meta.env.VITE_TMDB_API_BASE
+    return {
+        apiKey,
+        looksLikeV4,
+        base: baseFromEnv || (looksLikeV4 ? DEFAULT_BASE_4 : DEFAULT_BASE_3)
     }
 }
 
 export const getData = async ({ queryKey }) => {
-    console.log('getData queryKey', queryKey); // expected [<something>, <path>, <page>, <selectedGenresArray>]
-    const gotTmdbMetadata = await getTmdbMetadata();
-    if (!gotTmdbMetadata || (!gotTmdbMetadata.apiKey && !gotTmdbMetadata.bearer)) {
-        throw new Error('Missing TMDB credentials (VITE_TMDB_API_KEY, VITE_TMDB_READ_ACCESS_TOKEN or serverless endpoint)');
-    }
+    // queryKey expected: [<any>, <pathOrType>, <page>, <selectedGenresArray>]
+    console.log('getData queryKey', queryKey);
+    const { apiKey, base, looksLikeV4 } = getTmdbMetadata()
+    if (!apiKey) throw new Error('Missing TMDB API key (VITE_TMDB_API_KEY)')
 
-    // Base URL and default params for discover endpoint
+    const pathOrType = queryKey[1] || 'discover/movie'
     const page = queryKey[2] || 1
-    let url = `${base_url}${queryKey[1]}?page=${page}`;
-    // Add default discover params if using discover endpoints
-    if (queryKey[1].startsWith('discover/')) {
-        url += '&include_adult=false&include_video=false&language=en-US&sort_by=popularity.desc';
-    }
+    const selectedGenres = queryKey[3] || []
 
-    if (gotTmdbMetadata.apiKey) {
-        url += `&api_key=${gotTmdbMetadata.apiKey}`;
+    let url
+    // If user passed just a type like 'movie' or 'tv', build a discover URL
+    if (/^movie$|^tv$/.test(pathOrType)) {
+        url = new URL(`${base}/discover/${pathOrType}`)
+        url.searchParams.set('include_adult', 'false')
+        url.searchParams.set('include_video', 'false')
+        url.searchParams.set('language', 'en-US')
+        url.searchParams.set('sort_by', 'popularity.desc')
+        url.searchParams.set('page', String(page))
+        if (selectedGenres.length) url.searchParams.set('with_genres', selectedGenres.join(','))
+        // add api_key for v3 endpoints; v4 uses Authorization header instead
+        if (!looksLikeV4) url.searchParams.set('api_key', apiKey)
+    } else {
+        // treat pathOrType as a raw path (e.g. '/movie/now_playing' or 'search/movie')
+        const raw = pathOrType.replace(/^\/+/, '')
+        url = new URL(`${base}/${raw}`)
+        if (!looksLikeV4) url.searchParams.set('api_key', apiKey)
+        if (page) url.searchParams.set('page', String(page))
+        if (selectedGenres.length) url.searchParams.set('with_genres', selectedGenres.join(','))
     }
-    if (Array.isArray(queryKey[3]) && queryKey[3].length !== 0) // apply genre filters if any
-        url += '&with_genres=' + queryKey[3].join(',');
-    // support extra params as an object in queryKey[4], e.g., { query: 'batman' }
-    if (queryKey[4] && typeof queryKey[4] === 'object') {
-        Object.entries(queryKey[4]).forEach(([k, v]) => {
-            if (v === undefined || v === null) return
-            url += `&${encodeURIComponent(k)}=${encodeURIComponent(String(v))}`
-        })
-    }
-    console.log('getData url', url);
-
+    console.log('getData url', url.toString(), 'looksLikeV4=', looksLikeV4)
     const headers = {}
-    // If bearer token is provided, prefer Authorization header (TMDB v4 token)
-    if (gotTmdbMetadata.bearer) {
-        headers['Authorization'] = `Bearer ${gotTmdbMetadata.bearer}`
-    }
-    const resp = await fetch(url, { headers });
-    if(!resp.ok) throw new Error(`Failed to fetch data from TMDB ${resp.status}`)
-    return await resp.json();
+    if (looksLikeV4) headers['Authorization'] = `Bearer ${apiKey}`
+
+    const resp = await fetch(url.toString(), { headers })
+
+    if (!resp.ok) throw new Error(`TMDB fetch failed: ${resp.status}`)
+    return await resp.json()
 }
 
 export const getGenres = async ({ queryKey }) => {
-    console.log('getGenres queryKey', queryKey); // expected [<whatever>, <type>]
-    const gotTmdbMetadata = await getTmdbMetadata();
-    if (!gotTmdbMetadata?.apiKey && !gotTmdbMetadata?.bearer) throw new Error('Missing TMDB credentials');
-
-    let url = `${urlGenres}${queryKey[1]}/list`;
-    console.log('getGenres url', url);
+    // queryKey expected: [<any>, <type>] where type is 'movie' or 'tv'
+    console.log('getGenres queryKey', queryKey);
+    const { apiKey, base, looksLikeV4 } = getTmdbMetadata()
+    if (!apiKey) throw new Error('Missing TMDB API key (VITE_TMDB_API_KEY)')
+    const type = queryKey[1] || 'movie'
+    const url = new URL(`${base}/genre/${type}/list`)
+    url.searchParams.set('language', 'en')
+    if (!looksLikeV4) url.searchParams.set('api_key', apiKey)
     const headers = {}
-    if (gotTmdbMetadata.bearer) {
-        headers['Authorization'] = `Bearer ${gotTmdbMetadata.bearer}`
-    } else {
-        // fallback to API key param
-        url += `?api_key=${gotTmdbMetadata.apiKey}`
-    }
-    const resp = await fetch(url, { headers });
-    if (!resp.ok) throw new Error('Failed to fetch genres');
-    return await resp.json();
+    if (looksLikeV4) headers['Authorization'] = `Bearer ${apiKey}`
+    console.log('getGenres url', url.toString(), 'looksLikeV4=', looksLikeV4);
+    const resp = await fetch(url.toString(), { headers })
+    if (!resp.ok) throw new Error(`TMDB fetch failed: ${resp.status}`)
+    return await resp.json()
 }
 
-export const img_300='https://image.tmdb.org/t/p/w300';
-export const img_500='https://image.tmdb.org/t/p/w500';
+export const img_300 = 'https://image.tmdb.org/t/p/w300'
+export const img_500 = 'https://image.tmdb.org/t/p/w500'
