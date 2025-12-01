@@ -15,13 +15,23 @@ export const Movies = props => {
 
   console.log(page);
 
-  // TODO use getData
+  const type = 'movie'
+
+  useEffect(()=>{
+    let mounted = true
+    setLoading(true)
+    getData({queryKey:[null, type, page, selectedGenres]})
+      .then(res=>{ if(mounted) setData(res) })
+      .catch(err=>{ console.error('getData error', err); if(mounted) setData(null) })
+      .finally(()=>{ if(mounted) setLoading(false) })
+    return ()=>{ mounted=false }
+  },[page, selectedGenres])
 
   return (
    <PageLayout title="Movies" page={page} setPage={setPage} type='movie'
     selectedGenres={selectedGenres} setSelectedGenres={setSelectedGenres}
    > 
-    {/* TODO spin while loading */}
+    {isLoading && <MySpinner />}
     <Grid container spacing={2} justifyContent='center'>
       {data && data.results?.map(obj=>
        <MyCard key={obj.id} {...obj}/>
