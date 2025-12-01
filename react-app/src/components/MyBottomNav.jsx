@@ -5,7 +5,7 @@ import BottomNavigationAction from '@mui/material/BottomNavigationAction';
 import { MdMovie } from "react-icons/md";
 import { MdOutlineLiveTv } from "react-icons/md";
 import { FaSearch } from "react-icons/fa";
-import { useNavigate } from 'react-router';
+import { useNavigate } from 'react-router-dom';
 
 export const MyBottomNav=()=> {
   const [value, setValue] = React.useState(0);
@@ -21,7 +21,11 @@ export const MyBottomNav=()=> {
 
   return (
     <Box sx={{width:'100%',position:'fixed',bottom:0 }}>
-      <BottomNavigation todo="add properties and children" />
+      <BottomNavigation value={value} onChange={handleChange}>
+        <BottomNavigationAction label="Movies" icon={<MdMovie />} />
+        <BottomNavigationAction label="TV" icon={<MdOutlineLiveTv />} />
+        <BottomNavigationAction label="Search" icon={<FaSearch />} />
+      </BottomNavigation>
     </Box>
   );
 }
